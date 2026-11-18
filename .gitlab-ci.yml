@@ -1,0 +1,43 @@
+
+stages:
+  - lint
+  - test
+  - build
+
+default:
+  image: python:3.12-slim
+  before_script:
+    - python --version
+    - pip install -r requirements-dev.txt
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+lint:
+  stage: lint
+  script:
+    - flake8 src tests
+
+test:
+  stage: test
+  script:
+    - pytest -v --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+    expire_in: 1 week
+
+build:
+  stage: build
+  script:
+    - python -m build
+    - pip install dist/*.whl
+    - calc add 2 3
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
